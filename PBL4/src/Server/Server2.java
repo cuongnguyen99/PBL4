@@ -5,23 +5,22 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import Execute.StringHandling;
 
-public class Server2 {
+public class Server2 extends Thread{
 	public static int currentPort = 5002;
 	public static int server1Port = 5001;
 	public static int time_logic = 0;
-//	public void printQueue()
-//	{
-//		
-//	}
-	public static void sendMess(String mess, int time_logic, int port) throws Exception
+	public static StringHandling handle = new StringHandling();
+	public static void sendMess(String mess, int time_logic, int source, int dis) throws Exception
 	{
+		String output = "("+mess+","+source+","+time_logic+")";
 		//Tạo socket cho client kết nối đến server qua ID address và port
-		Socket server1Socket = new Socket("localhost",port);
+		Socket server1Socket = new Socket("localhost",dis);
 		//Tạo output stream nối với Socket
 		DataOutputStream outToServer = new DataOutputStream(server1Socket.getOutputStream());
 		//Gửi thông tin tới Server thông qua output stream đã nối với socket
-		outToServer.writeBytes(mess);
+		outToServer.writeBytes(output);
 		server1Socket.close();
 	}
 	public static void receiveMess()
@@ -34,9 +33,12 @@ public class Server2 {
 		String to_client;
 		//Tạo socket server, chờ tại cổng 5002
 		ServerSocket welcomSocket = new ServerSocket(currentPort);
-		
+		System.out.println("Server2 already...!");
+		Thread.sleep(2000);
 		while (true)
 		{
+			String mess;
+			int dis;
 			//Chờ yêu cầu từ client
 			Socket con = welcomSocket.accept();
 			//Tạo input stream, nối tới socket
@@ -46,15 +48,25 @@ public class Server2 {
 			//Đọc thông tin từ socket
 			from_client = inFromClient.readLine();
 			from_client.trim();
+			mess = handle.messSplit(from_client);
+			dis = handle.portSplit(from_client);
 //			System.out.println(from_client);
-			if(from_client.equalsIgnoreCase("REQ"))
+			if(mess.equalsIgnoreCase("REQ"))
 			{
-				System.out.println("REQ");
-				sendMess("ACQ", time_logic, server1Port);
+				System.out.println(from_client);
+				Thread.sleep(5000);
+				sendMess("ACQ", time_logic, currentPort, dis);
 			}
-			else if(from_client.equalsIgnoreCase("REL"))
+			else if(mess.equalsIgnoreCase("ACQ"))
 			{
-				System.out.println("REL");
+				System.out.println(from_client);
+				System.out.println("Da tien vao doan gang, chuan bi giai phong tai nguyen...");
+				sendMess("REL", time_logic,currentPort,dis);
+				System.out.println("Da giai phong tai nguyen!");
+			}
+			else if(mess.equalsIgnoreCase("REL"))
+			{
+				System.out.println(from_client);
 			}
 		}
 	}
