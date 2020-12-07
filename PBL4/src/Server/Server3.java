@@ -16,7 +16,7 @@ public class Server3{
 	
 	public static void sendMess(String mess, int time_logic, int source, int dis) throws Exception
 	{
-		String output = "("+mess+","+source+","+time_logic+")";
+		String output = mess+"-"+source+"-"+time_logic;
 		//Tạo socket cho client kết nối đến server qua ID address và port
 		Socket server1Socket = new Socket("localhost",dis);
 		//Tạo output stream nối với Socket
@@ -31,8 +31,9 @@ public class Server3{
 		String to_client;
 		//Tạo socket server, chờ tại cổng 5002
 		ServerSocket welcomSocket = new ServerSocket(currentPort);
-		System.out.println("Server2 already...!");
+		System.out.println("Server3 already...!");
 		Thread.sleep(2000);
+		sendMess("REQ",time_logic,currentPort, server2Port);
 		while (true)
 		{
 			String mess;
@@ -48,19 +49,19 @@ public class Server3{
 			from_client.trim();
 			mess = handle.messSplit(from_client);
 			dis = handle.portSplit(from_client);
-//			System.out.println(from_client);
 			if(mess.equalsIgnoreCase("REQ"))
 			{
 				System.out.println(from_client);
-				Thread.sleep(5000);
+				Thread.sleep(3000);
 				sendMess("ACQ", time_logic, currentPort, dis);
 			}
 			else if(mess.equalsIgnoreCase("ACQ"))
 			{
 				System.out.println(from_client);
 				System.out.println("Da tien vao doan gang, chuan bi giai phong tai nguyen...");
-				sendMess("REL", time_logic,currentPort,dis);
+				sendMess("REL", time_logic, currentPort,dis);
 				System.out.println("Da giai phong tai nguyen!");
+				Thread.sleep(2000);
 			}
 			else if(mess.equalsIgnoreCase("REL"))
 			{

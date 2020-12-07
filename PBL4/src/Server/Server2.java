@@ -11,10 +11,12 @@ public class Server2 extends Thread{
 	public static int currentPort = 5002;
 	public static int server1Port = 5001;
 	public static int time_logic = 0;
+	public static boolean cs = false; 			//True : Đang tồn tại 1 tiến trình trong đoạn găng || False : Đoạn găng đang trống
 	public static StringHandling handle = new StringHandling();
-	public static void sendMess(String mess, int time_logic, int source, int dis) throws Exception
+	public static void sendMess(String mess, int time, int source, int dis) throws Exception
 	{
-		String output = "("+mess+","+source+","+time_logic+")";
+		time += 1;
+		String output = mess+"-"+source+"-"+time;
 		//Tạo socket cho client kết nối đến server qua ID address và port
 		Socket server1Socket = new Socket("localhost",dis);
 		//Tạo output stream nối với Socket
@@ -22,10 +24,6 @@ public class Server2 extends Thread{
 		//Gửi thông tin tới Server thông qua output stream đã nối với socket
 		outToServer.writeBytes(output);
 		server1Socket.close();
-	}
-	public static void receiveMess()
-	{
-		
 	}
 	public static void main(String[] args) throws Exception
 	{
@@ -39,6 +37,7 @@ public class Server2 extends Thread{
 		{
 			String mess;
 			int dis;
+			int time;
 			//Chờ yêu cầu từ client
 			Socket con = welcomSocket.accept();
 			//Tạo input stream, nối tới socket
@@ -50,11 +49,12 @@ public class Server2 extends Thread{
 			from_client.trim();
 			mess = handle.messSplit(from_client);
 			dis = handle.portSplit(from_client);
-//			System.out.println(from_client);
+			time = handle.timelogicSplit(from_client);
+			time_logic = Math.max(time, time_logic);
 			if(mess.equalsIgnoreCase("REQ"))
 			{
 				System.out.println(from_client);
-				Thread.sleep(5000);
+				Thread.sleep(3000);
 				sendMess("ACQ", time_logic, currentPort, dis);
 			}
 			else if(mess.equalsIgnoreCase("ACQ"))

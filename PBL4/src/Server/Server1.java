@@ -5,6 +5,10 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
 import Execute.StringHandling;
 
 public class Server1 extends Thread{
@@ -14,9 +18,10 @@ public class Server1 extends Thread{
 	public static int time_logic = 0;
 	public static StringHandling handle = new StringHandling();
 	
-	public static void sendMess(String mess, int time_logic, int source, int dis) throws Exception
+	public static void sendMess(String mess, int time, int source, int dis) throws Exception
 	{
-		String output = "("+mess+","+source+","+time_logic+")";
+		time += 1;
+		String output = mess+"-"+source+"-"+time;
 		//Tạo socket cho client kết nối đến server qua ID address và port
 		Socket server1Socket = new Socket("localhost",dis);
 		//Tạo output stream nối với Socket
@@ -29,15 +34,15 @@ public class Server1 extends Thread{
 	{
 		String from_client;
 		String to_client;
-		
 		ServerSocket welcomSocket = new ServerSocket(currentPort);
 		System.out.println("Server1 already...!");
-		Thread.sleep(5000);
-		sendMess("REQ",time_logic, currentPort, server2Port);
+		Thread.sleep(3000);
+		sendMess("REQ",time_logic,currentPort, server2Port);
 		while(true)
 		{
 			String mess;
 			int dis;
+			int time;
 			//Chờ yêu cầu từ client
 			Socket con = welcomSocket.accept();
 			//Tạo input stream, nối tới socket
@@ -49,11 +54,12 @@ public class Server1 extends Thread{
 			from_client.trim();
 			mess = handle.messSplit(from_client);
 			dis = handle.portSplit(from_client);
+			time = handle.timelogicSplit(from_client);
+			time_logic = Math.max(time, time_logic);
 			if(mess.equalsIgnoreCase("ACQ"))
 			{
 				System.out.println(from_client);
 				System.out.println("Da tien vao doan gang, chuan bi giai phong tai nguyen...");
-				Thread.sleep(5000);
 				sendMess("REL", time_logic, currentPort,dis);
 				System.out.println("Da giai phong tai nguyen!");
 				Thread.sleep(2000);
