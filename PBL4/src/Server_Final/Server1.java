@@ -18,15 +18,21 @@ import javax.swing.border.EmptyBorder;
 
 import Execute.StringHandling;
 
-public class Server1 extends JFrame implements ActionListener{
+public class Server1 extends JFrame {
 	public static int currentPort = 5001;
 	public static int server2Port = 5002;
 	public static int server3Port = 5003;
 	public static int time_logic = 0;
 	public static StringHandling handle = new StringHandling();
+	public static int accessQ = 0;
+	
+	public static String[] queue = new String[10];
+	public static int top = -1;
+	public static boolean CS = false;
 	
 	public static JTextArea txt = new JTextArea();
-	JButton btn = new JButton("REQ");
+	public static JButton btnREQ = new JButton("REQ");
+	public static JButton btnREL = new JButton("REL");
 	private JPanel contentPane;
 
 	public static void main(String[] args) throws Exception{
@@ -53,22 +59,47 @@ public class Server1 extends JFrame implements ActionListener{
 			time_logic = Math.max(time, time_logic);
 			if(mess.equalsIgnoreCase("REQ"))
 			{
+				pushQ(from_client);
+				sortQ();
+				printQ();
 				txt.append("\n"+from_client);
-				Thread.sleep(2000);
-				time_logic++;
+				Thread.sleep(1000);
+				time_logic += 1;
 				sendMess("ACQ", time_logic, currentPort, dis);
 			}
 			else if(mess.equalsIgnoreCase("ACQ"))
 			{
+				accessQ += 1;
 				txt.append("\n"+from_client);
-				Thread.sleep(2000);
-				time_logic++;
-				sendMess("REL", time_logic,currentPort,dis);
+				if(accessQ ==2)
+				{
+					btnREQ.setEnabled(false);
+					btnREL.setEnabled(true);
+					int temp = handle.portSplit(queue[top]);
+					if(temp == currentPort)
+					{
+						txt.append("\nĐã vào miền găng!");
+					}
+					else
+					{
+						txt.append("\nMiền găng đang bận!");
+					}
+					
+				}
 			}
 			else if(mess.equalsIgnoreCase("REL"))
 			{
-				time_logic++;
+				popQ();
+				printQ();
 				txt.append("\n"+from_client);
+				if(top >= 0)
+				{
+					int temp = handle.portSplit(queue[top]);
+					if(temp == currentPort)
+					{
+						txt.append("\nĐã vào miền găng!");
+					}
+				}
 			}
 		}
 	}
@@ -81,8 +112,12 @@ public class Server1 extends JFrame implements ActionListener{
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
-		btn.setBounds(172, 25, 89, 23);
-		contentPane.add(btn);
+		btnREQ.setBounds(73, 22, 89, 23);
+		contentPane.add(btnREQ);
+		
+		btnREL.setBounds(253, 22, 89, 23);
+		contentPane.add(btnREL);
+		btnREL.setEnabled(false);
 		
 		txt.setBounds(10, 67, 414, 183);
 		txt.setText("Server ready!");
@@ -91,7 +126,8 @@ public class Server1 extends JFrame implements ActionListener{
 		this.setTitle("Server1");
 		this.setVisible(true);
 		
-		btn.addActionListener(this);
+		btnREQ.addActionListener(new reqAction());
+		btnREL.addActionListener(new relAction());
 	}
 	
 	public static void sendMess(String mess, int time, int source, int dis) throws Exception
@@ -105,16 +141,112 @@ public class Server1 extends JFrame implements ActionListener{
 		outToServer.writeBytes(output);
 		server1Socket.close();
 	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		try {
-			time_logic++;
-			sendMess("REQ", time_logic, currentPort, server2Port);
-			sendMess("REQ", time_logic, currentPort, server3Port);
-		} catch (Exception e1) {
-			e1.printStackTrace();
+	class reqAction implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			try {
+				accessQ = 0;
+				time_logic += 1;
+				sendMess("REQ", time_logic, currentPort, server2Port);
+				sendMess("REQ", time_logic, currentPort, server3Port);
+				pushQ("REQ-5001-"+time_logic);
+				sortQ();
+				printQ();
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 		}
 	}
+	class relAction implements ActionListener
+	{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			try {
+				int temp = handle.portSplit(queue[top]);
+				if(temp == currentPort)
+				{
+					time_logic += 1;
+					sendMess("REL", time_logic, currentPort, server2Port);
+					sendMess("REL", time_logic, currentPort, server3Port);
+					popQ();
+					printQ();
+					accessQ = 0;
+					btnREL.setEnabled(false);
+					btnREQ.setEnabled(true);
+				}
+				else
+				{
+					txt.append("\n Đoạn găng đang bận!");
+				}
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+	//Xử lý
+		public static void pushQ(String mess)
+		{
+			top += 1;
+			queue[top] = mess;
+		}
+		public static void popQ()
+		{
+			if(top == -1)
+			{
+				System.out.println("Hàng đợi rỗng!");
+			}
+			else
+			{
+				top -= 1;
+			}	
+		}
+		public static void printQ()
+		{
+			System.out.println("===========CS==========");
+			for(int i = top; i >=0; i--)
+			{
+				System.out.println(queue[i]);
+			}
+		}
+		public static void sortQ()
+		{
+			for(int i = 0; i<= top-1; i++)
+			{
+				for(int j=i+1; j <= top; j++)
+				{
+					int tempI = handle.timelogicSplit(queue[i]);
+					int tempJ = handle.timelogicSplit(queue[j]);
+					System.out.println("queue["+i+"]="+tempI+" || queue["+j+"]="+tempJ);
+					if(tempI < tempJ)
+					{
+						//swap(queue[i], queue[j]);
+						String t = queue[i];
+						queue[i] = queue[j];
+						queue[j] = t;
+					}
+					else if(tempI == tempJ)
+					{
+						int portI = handle.portSplit(queue[i]);
+						int portJ = handle.portSplit(queue[j]);
+						if(portI > portJ)
+						{
+							//swap(queue[i], queue[j]);
+							String t = queue[i];
+							queue[i] = queue[j];
+							queue[j] = t;
+						}
+					}
+				}
+			}
+		}
+		public static void swap(String a, String b)
+		{
+			String temp = a;
+			a = b;
+			b = temp;
+		}
+
 
 }

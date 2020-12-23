@@ -1,6 +1,7 @@
 package Execute;
 
 public class StringHandling {
+	//Lấy thông điệp
 	public String messSplit(String a)
 	{
 		String mess =""; 
@@ -13,6 +14,7 @@ public class StringHandling {
 		}
 		return mess;
 	}
+	//Lấy giá trị cổng
 	public int portSplit(String a)
 	{
 		String mess ="";
@@ -27,6 +29,7 @@ public class StringHandling {
 		port = Integer.parseInt(mess);
 		return port;
 	}
+	//Lấy time_logic
 	public int timelogicSplit(String a)
 	{
 		int time;

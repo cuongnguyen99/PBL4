@@ -32,12 +32,11 @@ public class Server3{
 		//Tạo socket server, chờ tại cổng 5002
 		ServerSocket welcomSocket = new ServerSocket(currentPort);
 		System.out.println("Server3 already...!");
-		Thread.sleep(2000);
-		sendMess("REQ",time_logic,currentPort, server2Port);
 		while (true)
 		{
 			String mess;
 			int dis;
+			int time;
 			//Chờ yêu cầu từ client
 			Socket con = welcomSocket.accept();
 			//Tạo input stream, nối tới socket
@@ -49,6 +48,8 @@ public class Server3{
 			from_client.trim();
 			mess = handle.messSplit(from_client);
 			dis = handle.portSplit(from_client);
+			time = handle.timelogicSplit(from_client);
+			time_logic = Math.max(time, time_logic);
 			if(mess.equalsIgnoreCase("REQ"))
 			{
 				System.out.println(from_client);
@@ -59,9 +60,8 @@ public class Server3{
 			{
 				System.out.println(from_client);
 				System.out.println("Da tien vao doan gang, chuan bi giai phong tai nguyen...");
-				sendMess("REL", time_logic, currentPort,dis);
+				sendMess("REL", time_logic,currentPort,dis);
 				System.out.println("Da giai phong tai nguyen!");
-				Thread.sleep(2000);
 			}
 			else if(mess.equalsIgnoreCase("REL"))
 			{

@@ -32,7 +32,6 @@ public class Server2 extends Thread{
 		//Tạo socket server, chờ tại cổng 5002
 		ServerSocket welcomSocket = new ServerSocket(currentPort);
 		System.out.println("Server2 already...!");
-		Thread.sleep(2000);
 		while (true)
 		{
 			String mess;

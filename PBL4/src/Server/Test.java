@@ -1,4 +1,4 @@
-package Server_Final;
+package Server;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -10,17 +10,18 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 
 import Execute.StringHandling;
-import Server_Final.Server3.relAction;
-import Server_Final.Server3.reqAction;
+import Execute.Queue;
 
-public class Server2 extends JFrame{
+import javax.swing.JButton;
+import javax.swing.JTextArea;
+
+public class Test extends JFrame {
+	
 	public static int currentPort = 5002;
 	public static int server1Port = 5001;
 	public static int server3Port = 5003;
@@ -36,9 +37,9 @@ public class Server2 extends JFrame{
 	public static JButton btnREQ = new JButton("REQ");
 	public static JButton btnREL = new JButton("REL");
 	private JPanel contentPane;
-
-	public static void main(String[] args) throws Exception {
-		new Server2();
+	
+	public static void main(String[] args) throws Exception{
+		new Test();
 		String from_client;
 		String to_client;
 		//Tạo socket server, chờ tại cổng 5002
@@ -62,31 +63,25 @@ public class Server2 extends JFrame{
 			if(mess.equalsIgnoreCase("REQ"))
 			{
 				pushQ(from_client);
-				sortQ();
-				printQ();
+				if(top >= 1)
+				{
+					sortQ();
+				}
 				txt.append("\n"+from_client);
+				System.out.println("Hang doi hien tai:");
+				printQ();
 				Thread.sleep(1000);
-				time_logic += 1;
 				sendMess("ACQ", time_logic, currentPort, dis);
 			}
 			else if(mess.equalsIgnoreCase("ACQ"))
 			{
 				accessQ += 1;
 				txt.append("\n"+from_client);
-				if(accessQ ==2)
+				if(accessQ >= 1)
 				{
 					btnREQ.setEnabled(false);
 					btnREL.setEnabled(true);
-					int temp = handle.portSplit(queue[top]);
-					if(temp == currentPort)
-					{
-						txt.append("\nĐã vào miền găng!");
-					}
-					else
-					{
-						txt.append("\nMiền găng đang bận!");
-					}
-					
+					txt.append("\nĐã vào đoạn găng!");
 				}
 			}
 			else if(mess.equalsIgnoreCase("REL"))
@@ -94,19 +89,14 @@ public class Server2 extends JFrame{
 				popQ();
 				printQ();
 				txt.append("\n"+from_client);
-				if(top >= 0)
-				{
-					int temp = handle.portSplit(queue[top]);
-					if(temp == currentPort)
-					{
-						txt.append("\nĐã vào miền găng!");
-					}
-				}
 			}
 		}
 	}
 
-	public Server2() {
+	/**
+	 * Create the frame.
+	 */
+	public Test() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
@@ -122,19 +112,23 @@ public class Server2 extends JFrame{
 		btnREL.setEnabled(false);
 		
 		txt.setBounds(10, 67, 414, 183);
-		txt.setText("Server2 ready!");
+		txt.setText("Server ready!");
 		contentPane.add(txt);
-		
-		this.setTitle("Server2");
+				
+		this.setTitle("Server");
 		this.setVisible(true);
 		
 		btnREQ.addActionListener(new reqAction());
 		btnREL.addActionListener(new relAction());
 	}
-	
 	public static void sendMess(String mess, int time, int source, int dis) throws Exception
 	{
+		time += 1;
 		String output = mess+"-"+source+"-"+time;
+		if(mess == "REQ")
+		{
+			pushQ(output);
+		}
 		//Tạo socket cho client kết nối đến server qua ID address và port
 		Socket server1Socket = new Socket("localhost",dis);
 		//Tạo output stream nối với Socket
@@ -143,18 +137,12 @@ public class Server2 extends JFrame{
 		outToServer.writeBytes(output);
 		server1Socket.close();
 	}
-
 	class reqAction implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			try {
-				accessQ = 0;
-				time_logic += 1;
 				sendMess("REQ", time_logic, currentPort, server1Port);
-				sendMess("REQ", time_logic, currentPort, server3Port);
-				pushQ("REQ-5002-"+time_logic);
-				sortQ();
 				printQ();
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -170,11 +158,8 @@ public class Server2 extends JFrame{
 				int temp = handle.portSplit(queue[top]);
 				if(temp == currentPort)
 				{
-					time_logic += 1;
 					sendMess("REL", time_logic, currentPort, server1Port);
-					sendMess("REL", time_logic, currentPort, server3Port);
 					popQ();
-					printQ();
 					accessQ = 0;
 					btnREL.setEnabled(false);
 					btnREQ.setEnabled(true);
@@ -188,67 +173,52 @@ public class Server2 extends JFrame{
 			}
 		}
 	}
+	
 	//Xử lý
-		public static void pushQ(String mess)
+	public static void pushQ(String mess)
+	{
+		top += 1;
+		queue[top] = mess;
+	}
+	public static void popQ()
+	{
+		top -= 1;
+	}
+	public static void printQ()
+	{
+		for(int i = top; i >=0; i--)
 		{
-			top += 1;
-			queue[top] = mess;
+			System.out.println(queue[i]);
 		}
-		public static void popQ()
+	}
+	public static void sortQ()
+	{
+		for(int i = 0; i<= top-1; i++)
 		{
-			if(top == -1)
+			for(int j=i+1; j <= top; j++)
 			{
-				System.out.println("Hàng đợi rỗng!");
-			}
-			else
-			{
-				top -= 1;
-			}
-		}
-		public static void printQ()
-		{
-			System.out.println("===========CS==========");
-			for(int i = top; i >=0; i--)
-			{
-				System.out.println(queue[i]);
-			}
-		}
-		public static void sortQ()
-		{
-			for(int i = 0; i<= top-1; i++)
-			{
-				for(int j=i+1; j <= top; j++)
+				int tempI = handle.timelogicSplit(queue[i]);
+				int tempJ = handle.timelogicSplit(queue[j]);
+				if(tempI < tempJ)
 				{
-					int tempI = handle.timelogicSplit(queue[i]);
-					int tempJ = handle.timelogicSplit(queue[j]);
-					System.out.println("queue["+i+"]="+tempI+" || queue["+j+"]="+tempJ);
-					if(tempI < tempJ)
+					swap(queue[i], queue[j]);
+				}
+				else if(tempI == tempJ)
+				{
+					int portI = handle.portSplit(queue[i]);
+					int portJ = handle.portSplit(queue[j]);
+					if(portI > portJ)
 					{
-						//swap(queue[i], queue[j]);
-						String t = queue[i];
-						queue[i] = queue[j];
-						queue[j] = t;
-					}
-					else if(tempI == tempJ)
-					{
-						int portI = handle.portSplit(queue[i]);
-						int portJ = handle.portSplit(queue[j]);
-						if(portI > portJ)
-						{
-							//swap(queue[i], queue[j]);
-							String t = queue[i];
-							queue[i] = queue[j];
-							queue[j] = t;
-						}
+						swap(queue[i], queue[j]);
 					}
 				}
 			}
 		}
-		public static void swap(String a, String b)
-		{
-			String temp = a;
-			a = b;
-			b = temp;
-		}
-
+	}
+	public static void swap(String a, String b)
+	{
+		String temp = a;
+		a = b;
+		b = temp;
+	}
 }

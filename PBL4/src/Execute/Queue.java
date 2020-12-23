@@ -8,6 +8,10 @@ public class Queue {
 	public static int time = 0;
 	public static boolean Cs = true;
 	
+	public Queue()
+	{
+		top = -1;
+	}
 	//In thông điệp trong hàng đợi
 	public void printQueue()
 	{
